@@ -145,7 +145,7 @@ class MMSegmentationDetector:
                     self.endTimer()
 
                 print("\rNet: SegFormer" +
-                      "\tDetected: " + str(self.detected_num) + "/" + str(total_num) +
+                      "\tDetected: " + str(self.detected_num) + "/" + str(total_num - timer_skip_num) +
                       "\t\tAvgTime: " + str(self.getAverageTime()) +
                       "\tAvgFPS: " + str(self.getAverageFPS()) +
                       "    ", end="")
@@ -156,11 +156,11 @@ class MMSegmentationDetector:
 
 
 if __name__ == '__main__':
-    config = "./local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
+    config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
     checkpoint = "./segformer.b5.640x640.ade.160k.pth"
     device = "cuda:0"
     palette = "ade"
-    image_folder_path = "./demo/"
+    image_folder_path = "./sample_images/"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
