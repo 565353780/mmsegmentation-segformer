@@ -168,4 +168,3 @@ if __name__ == '__main__':
 
     mm_segmentation_detector.test(image_folder_path)
 
-

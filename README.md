@@ -10,5 +10,13 @@ pip install mmsegmentation timm ipython attr
 git clone https://github.com/NVlabs/SegFormer.git
 cd SegFormer
 pip install -e . --user
+cd ..
+git clone ssh://git@chLi:30001/mine/mmsegmentation-segformer.git
+```
+
+# Run detect
+```bash
+cd mmsegmentation-segformer
+python MMSegmentationDetector.py
 ```
 
