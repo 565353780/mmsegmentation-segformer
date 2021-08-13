@@ -8,15 +8,7 @@ import time
 
 class MMSegmentationDetector:
     def __init__(self):
-        self.config = None
-        self.checkpoint = None
-        self.device = None
-        self.palette = None
-        self.model = None
-        self.model_ready = False
-        self.time_start = None
-        self.total_time_sum = 0
-        self.detected_num = 0
+        self.reset()
 
     def reset(self):
         self.config = None
