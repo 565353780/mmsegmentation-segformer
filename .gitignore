@@ -1,2 +1,9 @@
 # Models
 *.pth
+
+# Datasets
+data
+
+# Outputs
+work_dirs
+
