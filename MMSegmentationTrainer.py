@@ -208,8 +208,8 @@ if __name__ == "__main__":
     mm_segmentation_trainer.loadModel(config, checkpoint)
     mm_segmentation_trainer.loadDatasets()
 
+    # for spending less GPU memory
     mm_segmentation_trainer.cfg.data['samples_per_gpu'] = 1
-    mm_segmentation_trainer.cfg.data['workers_per_gpu'] = 1
 
     mm_segmentation_trainer.train()
 
