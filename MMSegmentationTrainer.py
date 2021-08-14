@@ -17,12 +17,20 @@ from mmseg.datasets import build_dataset
 from mmseg.models import build_segmentor
 from mmseg.utils import collect_env, get_root_logger
 
+import torch.distributed as dist
+
 class MMSegmentationTrainer:
     def __init__(self):
         self.reset()
 
         if 'LOCAL_RANK' not in os.environ:
             os.environ['LOCAL_RANK'] = str(self.local_rank)
+        if 'MASTER_ADDR' not in os.environ:
+            os.environ['MASTER_ADDR'] = "192.168.1.15"
+        if 'MASTER_PORT' not in os.environ:
+            os.environ['MASTER_PORT'] = "5678"
+
+        dist.init_process_group('gloo', init_method='env://', rank=0, world_size=1)
 
     def reset(self):
         self.config = None
@@ -199,6 +207,9 @@ if __name__ == "__main__":
 
     mm_segmentation_trainer.loadModel(config, checkpoint)
     mm_segmentation_trainer.loadDatasets()
+
+    mm_segmentation_trainer.cfg.data['samples_per_gpu'] = 1
+    mm_segmentation_trainer.cfg.data['workers_per_gpu'] = 1
 
     mm_segmentation_trainer.train()
 
