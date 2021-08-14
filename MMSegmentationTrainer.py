@@ -35,10 +35,15 @@ class MMSegmentationTrainer:
         self.detected_num = 0
         self.local_rank = 0
         self.gpu_ids = range(1)
+        self.distributed = False
         self.launcher = False
         self.cfg = None
         self.seed = None
-        self.deterministic = None
+        self.deterministic = False
+        self.timestamp = None
+        self.logger = None
+        self.env_info = None
+        self.datasets = None
 
     def resetTimer(self):
         self.time_start = None
@@ -76,49 +81,120 @@ class MMSegmentationTrainer:
 
         return int(1.0 * self.detected_num / self.total_time_sum)
 
-    def initEnv(self, work_dir=None, seed=None):
+    def setConfig(self, config):
+        self.config = config
+        cfg = Config.fromfile(self.config)
+
+        if cfg.get('cudnn_benchmark', False):
+            torch.backends.cudnn.benchmark = True
+        return
+
+    def setCheckPoint(self, checkpoint):
+        self.checkpoint = checkpoint
+        if self.checkpoint is not None:
+            self.cfg.resume_from = self.checkpoint
+        return
+
+    def setWorkDir(self, work_dir):
         if work_dir is not None:
             self.work_dir = work_dir
         else:
             self.work_dir = osp.join('./work_dirs',
                                      osp.splitext(osp.basename(self.config))[0])
 
+        self.cfg.work_dir = self.work_dir
+        return
+
+    def setSeed(self, seed):
         if seed is not None:
             self.seed = seed
             logger.info(f'Set random seed to {self.seed}, deterministic: '
                         f'{self.deterministic}')
-            set_random_seed(args.seed, deterministic=args.deterministic)
- 
+            set_random_seed(self.seed, deterministic=self.deterministic)
+        self.seed = seed
+        return
 
-
-        self.cfg.work_dir = self.work_dir
- 
+    def setEnv(self):
         mmcv.mkdir_or_exist(osp.abspath(self.work_dir))
         self.cfg.dump(osp.join(self.work_dir, osp.basename(self.config)))
-        timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-        log_file = osp.join(self.work_dir, f'{timestamp}.log')
-        logger = get_root_logger(log_file=log_file, log_level=self.cfg.log_level)
-
-        meta = dict()
+        self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
+        log_file = osp.join(self.work_dir, f'{self.timestamp}.log')
+        self.logger = get_root_logger(log_file=log_file, log_level=self.cfg.log_level)
 
         env_info_dict = collect_env()
-        env_info = '\n'.join([f'{k}: {v}' for k, v in env_info_dict.items()])
+        self.env_info = '\n'.join([f'{k}: {v}' for k, v in env_info_dict.items()])
         dash_line = '-' * 60 + '\n'
-        logger.info('Environment info:\n' + dash_line + env_info + '\n' +
+        self.logger.info('Environment info:\n' + dash_line + self.env_info + '\n' +
                     dash_line)
-        meta['env_info'] = env_info
+        return
+
+    def setMeta(self):
+        meta = dict()
+        meta['env_info'] = self.env_info
+        meta['seed'] = self.seed
+        meta['exp_name'] = osp.basename(self.config)
+        return
+
+    def initEnv(self, work_dir=None, seed=None):
+        self.setWorkDir(work_dir)
+        self.setSeed(seed)
+        self.setEnv()
+        self.setMeta()
 
         logger.info(f'Distributed training: {self.distributed}')
         logger.info(f'Config:\n{self.cfg.pretty_text}')
 
     def loadModel(self, config, checkpoint):
-        self.config = config
-        self.checkpoint = checkpoint
+        self.setConfig(config)
+        self.setCheckPoint(checkpoint)
 
-        cfg = Config.fromfile(self.config)
-        if cfg.get('cudnn_benchmark', False):
-            torch.backends.cudnn.benchmark = True
+        self.initEnv()
 
-        pass
+        self.model = build_segmentor(
+            self.cfg.model,
+            train_cfg=self.cfg.get('train_cfg'),
+            test_cfg=self.cfg.get('test_cfg'))
 
+        self.logger.info(model)
+        return
+
+    def loadDatasets(self):
+        self.datasets = [build_dataset(self.cfg.data.train)]
+
+        if len(self.cfg.workflow) == 2:
+            val_dataset = copy.deepcopy(self.cfg.data.val)
+            val_dataset.pipeline = self.cfg.data.train.pipeline
+            self.datasets.append(build_dataset(val_dataset))
+
+        if self.cfg.checkpoint_config is not None:
+            self.cfg.checkpoint_config.meta = dict(
+                mmseg_version=f'{__version__}+{get_git_hash()[:7]}',
+                config=self.cfg.pretty_text,
+                CLASSES=self.datasets[0].CLASSES,
+                PALETTE=self.datasets[0].PALETTE)
+
+        model.CLASSES = self.datasets[0].CLASSES
+        return
+
+    def train(self):
+        train_segmentor(
+            self.model,
+            self.datasets,
+            self.cfg,
+            distributed=self.distributed,
+            validate=(not self.no_validate),
+            timestamp=self.timestamp,
+            meta=self.meta)
+        return
+
+if __name__ == "__main__":
+    config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
+    checkpoint = None
+
+    mm_segmentation_trainer = MMSegmentationTrainer()
+
+    mm_segmentation_trainer.loadModel(config, checkpoint)
+    mm_segmentation_trainer.loadDatasets()
+
+    mm_segmentation_trainer.train()
 
