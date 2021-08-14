@@ -39,11 +39,13 @@ class MMSegmentationTrainer:
         self.launcher = False
         self.cfg = None
         self.seed = None
+        self.meta = None
         self.deterministic = False
         self.timestamp = None
         self.logger = None
         self.env_info = None
         self.datasets = None
+        self.no_validate = False
 
     def resetTimer(self):
         self.time_start = None
@@ -83,9 +85,9 @@ class MMSegmentationTrainer:
 
     def setConfig(self, config):
         self.config = config
-        cfg = Config.fromfile(self.config)
+        self.cfg = Config.fromfile(self.config)
 
-        if cfg.get('cudnn_benchmark', False):
+        if self.cfg.get('cudnn_benchmark', False):
             torch.backends.cudnn.benchmark = True
         return
 
@@ -106,15 +108,17 @@ class MMSegmentationTrainer:
         return
 
     def setSeed(self, seed):
-        if seed is not None:
-            self.seed = seed
+        self.seed = seed
+        if self.seed is not None:
             logger.info(f'Set random seed to {self.seed}, deterministic: '
                         f'{self.deterministic}')
             set_random_seed(self.seed, deterministic=self.deterministic)
-        self.seed = seed
+
+        self.cfg.seed = self.seed
         return
 
     def setEnv(self):
+        self.cfg.gpu_ids = self.gpu_ids
         mmcv.mkdir_or_exist(osp.abspath(self.work_dir))
         self.cfg.dump(osp.join(self.work_dir, osp.basename(self.config)))
         self.timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
@@ -129,10 +133,10 @@ class MMSegmentationTrainer:
         return
 
     def setMeta(self):
-        meta = dict()
-        meta['env_info'] = self.env_info
-        meta['seed'] = self.seed
-        meta['exp_name'] = osp.basename(self.config)
+        self.meta = dict()
+        self.meta['env_info'] = self.env_info
+        self.meta['seed'] = self.seed
+        self.meta['exp_name'] = osp.basename(self.config)
         return
 
     def initEnv(self, work_dir=None, seed=None):
@@ -141,8 +145,8 @@ class MMSegmentationTrainer:
         self.setEnv()
         self.setMeta()
 
-        logger.info(f'Distributed training: {self.distributed}')
-        logger.info(f'Config:\n{self.cfg.pretty_text}')
+        self.logger.info(f'Distributed training: {self.distributed}')
+        self.logger.info(f'Config:\n{self.cfg.pretty_text}')
 
     def loadModel(self, config, checkpoint):
         self.setConfig(config)
@@ -155,7 +159,7 @@ class MMSegmentationTrainer:
             train_cfg=self.cfg.get('train_cfg'),
             test_cfg=self.cfg.get('test_cfg'))
 
-        self.logger.info(model)
+        self.logger.info(self.model)
         return
 
     def loadDatasets(self):
@@ -173,7 +177,7 @@ class MMSegmentationTrainer:
                 CLASSES=self.datasets[0].CLASSES,
                 PALETTE=self.datasets[0].PALETTE)
 
-        model.CLASSES = self.datasets[0].CLASSES
+        self.model.CLASSES = self.datasets[0].CLASSES
         return
 
     def train(self):
