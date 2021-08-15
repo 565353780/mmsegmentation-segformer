@@ -11,10 +11,12 @@ class MMSegmentationDetector:
         self.reset()
 
     def reset(self):
+        self.valid_dataset_name_list = ['ade', 'city']
+        self.dataset_name = None
         self.config = None
         self.checkpoint = None
+        self.checkpoint_ready = False
         self.device = None
-        self.palette = None
         self.model = None
         self.model_ready = False
         self.time_start = None
@@ -56,6 +58,25 @@ class MMSegmentationDetector:
             return -1
 
         return int(1.0 * self.detected_num / self.total_time_sum)
+
+    def setCheckPoint(self, checkpoint):
+        self.checkpoint = checkpoint
+        self.checkpoint_ready = False
+
+        checkpoint_file_name = os.path.basename(checkpoint)
+
+        dataset_index = -1
+
+        for i in range(len(self.valid_dataset_name_list)):
+            if self.valid_dataset_name_list[i] in checkpoint_file_name:
+                dataset_index = i
+                break
+         
+        if dataset_index == -1:
+            print("Cannot load this checkpoint type!")
+            return
+
+        self.dataset_name = self.valid_dataset_name_list[dataset_index]
 
     def loadModel(self, config, checkpoint, device="cuda:0"):
         self.reset()
@@ -112,7 +133,7 @@ class MMSegmentationDetector:
                           "\tAvgFPS: " + str(self.getAverageFPS()) +
                           "    ", end="")
 
-                    #  show_result_pyplot(self.model, image_file_path, result, get_palette(self.palette))
+                    #  show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
 
             print()
 
@@ -142,7 +163,7 @@ class MMSegmentationDetector:
                       "\tAvgFPS: " + str(self.getAverageFPS()) +
                       "    ", end="")
 
-                show_result_pyplot(self.model, image_file_path, result, get_palette(self.palette))
+                show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
 
         print()
 
@@ -152,7 +173,6 @@ if __name__ == '__main__':
     checkpoint = "./segformer.b5.640x640.ade.160k.pth"
     image_folder_path = "./sample_images/"
     device = "cuda:0"
-    palette = "ade"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
