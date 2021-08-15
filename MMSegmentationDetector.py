@@ -78,11 +78,22 @@ class MMSegmentationDetector:
 
         self.dataset_name = self.valid_dataset_name_list[dataset_index]
 
-    def loadModel(self, config, checkpoint, device="cuda:0"):
+        self.checkpoint_ready = True
+        return
+
+    def initEnv(self, config, checkpoint, device):
         self.reset()
         self.config = config
-        self.checkpoint = checkpoint
         self.device = device
+        self.setCheckPoint(checkpoint)
+        return
+
+
+    def loadModel(self, config, checkpoint, device="cuda:0"):
+        self.initEnv(config, checkpoint, device)
+
+        if not self.checkpoint_ready:
+            return
 
         self.model = init_segmentor(self.config, self.checkpoint, self.device)
 
@@ -94,7 +105,7 @@ class MMSegmentationDetector:
         result = inference_segmentor(self.model, image)
         return result
 
-    def test(self, image_folder_path, run_episode=10, timer_skip_num=5):
+    def test(self, image_folder_path, run_episode=-1, timer_skip_num=5):
         if not self.model_ready:
             print("Model not ready yet, Please loadModel or check your model path first!")
             return
@@ -172,11 +183,10 @@ if __name__ == '__main__':
     config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
     checkpoint = "./segformer.b5.640x640.ade.160k.pth"
     image_folder_path = "./sample_images/"
-    device = "cuda:0"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
-    mm_segmentation_detector.loadModel(config, checkpoint, device)
+    mm_segmentation_detector.loadModel(config, checkpoint)
 
-    mm_segmentation_detector.test(image_folder_path)
+    mm_segmentation_detector.test(image_folder_path, 1)
 
