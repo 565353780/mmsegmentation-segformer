@@ -47,11 +47,11 @@ class MMSegmentationDetector:
         else:
             print("Time end must > time start!")
 
-    def getAverageTime(self):
+    def getAverageTimeMS(self):
         if self.detected_num == 0:
             return -1
 
-        return 1.0 * self.total_time_sum / self.detected_num
+        return int(1000.0 * self.total_time_sum / self.detected_num)
 
     def getAverageFPS(self):
         if self.detected_num == 0:
@@ -140,7 +140,7 @@ class MMSegmentationDetector:
 
                     print("\rNet: SegFormer" +
                           "\tDetected: " + str(self.detected_num) +
-                          "\tAvgTime: " + str(self.getAverageTime()) +
+                          "\tAvgTime: " + str(self.getAverageTimeMS()) + "ms"
                           "\tAvgFPS: " + str(self.getAverageFPS()) +
                           "    ", end="")
 
@@ -170,11 +170,11 @@ class MMSegmentationDetector:
 
                 print("\rNet: SegFormer" +
                       "\tDetected: " + str(self.detected_num) + "/" + str(total_num - timer_skip_num) +
-                      "\t\tAvgTime: " + str(self.getAverageTime()) +
+                      "\t\tAvgTime: " + str(self.getAverageTimeMS()) + "ms"
                       "\tAvgFPS: " + str(self.getAverageFPS()) +
                       "    ", end="")
 
-                show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
+                #  show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
 
         print()
 
@@ -188,5 +188,5 @@ if __name__ == '__main__':
 
     mm_segmentation_detector.loadModel(config, checkpoint)
 
-    mm_segmentation_detector.test(image_folder_path, 1)
+    mm_segmentation_detector.test(image_folder_path)
 
