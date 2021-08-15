@@ -14,11 +14,10 @@ cd ..
 git clone ssh://git@chLi:30001/mine/mmsegmentation-segformer.git
 ```
 
-# Copy models
+# Copy models and datasets
 ```bash
 cd mmsegmentation-segformer
-cp ~/chLi/Download/DeepLearning/Model/SegFormer/trained_models/segformer.b5.640x640.ade.160k.pth ./
-cp ~/chLi/Download/DeepLearning/Model/SegFormer/pretrained_models/mit_b5.pth ./
+./init.sh
 ```
 
 # Run detect
@@ -26,3 +25,7 @@ cp ~/chLi/Download/DeepLearning/Model/SegFormer/pretrained_models/mit_b5.pth ./
 python MMSegmentationDetector.py
 ```
 
+# Run train
+```bash
+python MMSegmentationTrainer.py
+```
