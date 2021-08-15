@@ -142,7 +142,7 @@ class MMSegmentationDetector:
                       "\tAvgFPS: " + str(self.getAverageFPS()) +
                       "    ", end="")
 
-                #  show_result_pyplot(self.model, image_file_path, result, get_palette(self.palette))
+                show_result_pyplot(self.model, image_file_path, result, get_palette(self.palette))
 
         print()
 
@@ -150,9 +150,9 @@ class MMSegmentationDetector:
 if __name__ == '__main__':
     config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
     checkpoint = "./segformer.b5.640x640.ade.160k.pth"
+    image_folder_path = "./sample_images/"
     device = "cuda:0"
     palette = "ade"
-    image_folder_path = "./sample_images/"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
