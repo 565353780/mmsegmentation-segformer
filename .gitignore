@@ -7,3 +7,5 @@ data
 # Outputs
 work_dirs
 
+# Samples
+test_*

@@ -6,6 +6,24 @@ from mmseg.core.evaluation import get_palette
 import os
 import time
 
+import cv2
+import numpy as np
+
+ade_label_list = []
+ade_label_list.append("None")
+
+ade_label_config_list = []
+
+with open("./objectInfo150.txt", "r") as f:
+    for line in f.readlines():
+        ade_label_config_list.append(line)
+
+for i in range(1, len(ade_label_config_list)):
+    current_line = ade_label_config_list[i]
+    current_line_info = current_line.split("\n")[0].split(",")
+    current_label = current_line_info[-1]
+    ade_label_list.append(current_label)
+
 class MMSegmentationDetector:
     def __init__(self):
         self.reset()
@@ -162,6 +180,20 @@ class MMSegmentationDetector:
 
                 result = self.detect(image_file_path)
 
+                image_to_show = np.asarray(result[0], dtype=np.uint8)
+
+                used_ade_label_list = []
+
+                for i in range(result[0].shape[0]):
+                    for j in range(result[0].shape[1]):
+                        if result[0][i][j] not in used_ade_label_list:
+                            used_ade_label_list.append(result[0][i][j])
+
+                for used_ade_label in used_ade_label_list:
+                    pass
+
+                #  cv2.imwrite("result", image_to_show)
+
                 if timer_skipped_num < timer_skip_num:
                     self.endTimer(False)
                     timer_skipped_num += 1
@@ -174,7 +206,7 @@ class MMSegmentationDetector:
                       "\tAvgFPS: " + str(self.getAverageFPS()) +
                       "    ", end="")
 
-                #  show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
+                show_result_pyplot(self.model, image_file_path, result, get_palette(self.dataset_name))
 
         print()
 
@@ -182,11 +214,11 @@ class MMSegmentationDetector:
 if __name__ == '__main__':
     config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
     checkpoint = "./segformer.b5.640x640.ade.160k.pth"
-    image_folder_path = "./sample_images/"
+    image_folder_path = "./test_chair/"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
     mm_segmentation_detector.loadModel(config, checkpoint)
 
-    mm_segmentation_detector.test(image_folder_path)
+    mm_segmentation_detector.test(image_folder_path, 1)
 
