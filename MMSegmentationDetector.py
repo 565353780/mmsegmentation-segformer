@@ -27,6 +27,7 @@ for i in range(1, len(ade_label_config_list)):
 class MMSegmentationDetector:
     def __init__(self):
         self.reset()
+        return
 
     def reset(self):
         self.valid_dataset_name_list = ['ade', 'city']
@@ -40,14 +41,17 @@ class MMSegmentationDetector:
         self.time_start = None
         self.total_time_sum = 0
         self.detected_num = 0
+        return
 
     def resetTimer(self):
         self.time_start = None
         self.total_time_sum = 0
         self.detected_num = 0
+        return
 
     def startTimer(self):
         self.time_start = time.time()
+        return
 
     def endTimer(self, save_time=True):
         time_end = time.time()
@@ -64,6 +68,7 @@ class MMSegmentationDetector:
             self.detected_num += 1
         else:
             print("Time end must > time start!")
+        return
 
     def getAverageTimeMS(self):
         if self.detected_num == 0:
