@@ -218,8 +218,8 @@ class MMSegmentationDetector:
 
 if __name__ == '__main__':
     config = "../SegFormer/local_configs/segformer/B5/segformer.b5.640x640.ade.160k.py"
-    checkpoint = "./segformer.b5.640x640.ade.160k.pth"
-    image_folder_path = "./test_chair/"
+    checkpoint = "/home/chli/chLi/SegFormer/segformer.b5.640x640.ade.160k.pth"
+    image_folder_path = "/home/chli/chLi/NeRF/ustc_niu/images"
 
     mm_segmentation_detector = MMSegmentationDetector()
 
